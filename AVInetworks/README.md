@@ -10,7 +10,7 @@
 kubectl logs -n avi-system ako-0  
 ```
 出現  
-圖片  
+![img](https://github.com/ReSin-Yan/Tanzu-WorkGuide/blob/main/AVInetworks/Labelsdoesnotmatch.PNG)  
 
 
 發生原因為  
@@ -29,3 +29,5 @@ kubectl logs -n avi-system ako-0
 kubectl edit configmap avi-k8s-config -n avi-system  
 helm delete $(helm list -n avi-system -q) -n avi-system  
 ```
+參考資料:  
+[AKO 1.4 DebugNote](https://avinetworks.com/docs/ako/1.4/ako-faq/ "link")  
