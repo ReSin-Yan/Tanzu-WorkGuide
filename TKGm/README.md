@@ -6,7 +6,23 @@
 Docker  
 Kubectl套件  
 CPU大於4 Core  
-RAM大於6 GB
+RAM大於6 GB  
+
+
+2.版本對應的OVF(範本)名稱必須完全符合  
+不同版本OVF不相通  
+
+
+3.kube-vip的IP網段需要跟DHCP的網段相同  
+會造成management-cluster只會把Control-plane建立出來  
+其他worker都不會建立  
+
+4.如果在安裝過程中  
+卡在bootstrape中的某一個步驟  
+建議整台linux client刪掉重裝  
+具體發生原因不明  
+
+
 
 ```
 kubectl-vsphere login --vsphere-username administrator@vsphere.local --server=x.x.x.x --insecure-skip-tls-verify  
