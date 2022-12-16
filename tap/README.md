@@ -62,7 +62,7 @@ chmod 700 get_helm.sh
 ``` 
 
 安裝Kubectl工具(本篇文章透過原生Kubectl的安裝方式)  
-[VMWare提供之安裝方式]([https://www.ithome.com.tw/news/148845](https://kubernetes.io/docs/tasks/tools/install-kubectl-linux/) "link")  
+[VMWare提供之安裝方式](https://kubernetes.io/docs/tasks/tools/install-kubectl-linux/ "link")  
 
 
 
@@ -163,6 +163,33 @@ tanzu package install tap -p tap.tanzu.vmware.com -v 1.3.3 --values-file  tap-va
 通常第一次安裝都會failed  
 但是實際上並不是安裝失敗，而是images在下載，過了檢查時間  
 可以過一小段時間再回頭檢查  
+
+安裝的版本是Full(總共有五種版本，Full、Iterate、Build、Run、View)	  
+[Components and installation profiles](https://docs.vmware.com/en/VMware-Tanzu-Application-Platform/1.3/tap/GUID-about-package-profiles.html "link")  
+Full版本需要再額外安裝full-tbs-deps的套件才能啟用buildservice  
+
+參考以下方式  
+獲取版本號(例如1.7.4)  
+```
+tanzu package available list buildservice.tanzu.vmware.com --namespace tap-install
+```
+
+將所有檔案下載到本地端  
+```
+imgpkg copy -b registry.tanzu.vmware.com/tanzu-application-platform/full-tbs-deps-package-repo:1.7.4   --to-tar=tbs-full-deps.tar
+```
+
+將檔案上傳至dockerhub  
+會需登入Dockerhub  
+並且單獨安裝full-tbs-deps  
+```
+docker login
+imgpkg copy --tar tbs-full-deps.tar   --to-repo=index.docker.io/aa210682/tbs-full-depstanzu package repository add tbs-full-deps-repository
+tanzu package repository add tbs-full-deps-repository --url index.docker.io/aa210682/tbs-full-deps:1.7.4 --namespace tap-install
+tanzu package install full-tbs-deps -p full-tbs-deps.tanzu.vmware.com -v 1.7.4 -n tap-install
+```
+
+
 
 
 ###   
