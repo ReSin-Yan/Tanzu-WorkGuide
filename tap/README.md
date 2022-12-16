@@ -201,6 +201,10 @@ tanzu package installed list -A
 ```
 tanzu package installed  get tap-gui -n tap-install
 ```
+確認profile可以輸入的參數  
+```
+tanzu package available get tap-gui.tanzu.vmware.com/1.3.2 -n tap-install --values-schema -o yaml
+```
 刪除服務  
 ```
 tanzu package installed delete tap -n tap-install
