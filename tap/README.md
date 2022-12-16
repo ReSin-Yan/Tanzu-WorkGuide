@@ -2,7 +2,7 @@ Last update: 2022/12
 目前版本:1.3.3  
 # Tanzu Application Platform  
 
-### Tanzu Application Platform簡易介紹     
+## Tanzu Application Platform簡易介紹     
 Tanzu Application Platform簡稱TAP，主要功能為提供營運團隊一個方便使用、可擴展性及安全的平台
 
 
@@ -12,17 +12,26 @@ Tanzu是VMware因應企業應用轉向容器化，而推出的開發及管理產
 
 VMware表示，Tanzu Application Service和最新的TAP差異在，TAP使用Tanzu及kubectl指令行介面（CLI）工具，而前者則使用VMware Tanzu Operations Manager及Cloud Foundry CLI。針對想轉移到TAP的Tanzu Application Service用戶，VMware也提供移轉和相容工具。
 
-本周VMware也同時宣布Application Service Adapter for VMware Tanzu Application Platform的第一個beta版本。首個版本著重應用生命周期及路由（routing）能力，並且讓開發團隊能繼續使用舊工具，例如Cloud Foundry CLI、用戶端及相同workflow （cf push），將應用程式部署到新的TAP及Kubernetes叢集上。
-
-Application Service Adapter已經由Tanzu網站開放下載測試。此外VMware也宣布將Application Service Adapter開源作為Cloud Foundry專案。
-
-
 
 [參考網站](https://www.ithome.com.tw/news/148845 "link")  
 
 
-### 安裝步驟   
-  
+## 安裝步驟   
+
+### 環境簡介&安裝需求  
+
+| 基本需求 | 用途or說明 | 
+|-------|-------|
+| VMWare Tanzu Network | 用來下載安裝需要之檔案，安裝必要之images(可以推送到私有倉庫) |
+| container image registry |  Docker Hun or Harbor(本文使用Docker hun對外安裝的方式) |
+| Gitlab or Github  | 以Repo為單位，進行配置workload |  
+| 包含StorageClass的kubernetes  | 完整安裝需要10GB以上的可使用空間,以及設定成default |  
+| DNS Record  | 服務使用Contour及enovy，可以等TAP建立完成後設定 |  
+| Kubernetes需求  | v1.22,v1.23,v1.24, 本篇文章使用Tanzu(7.0 U3e or later) |  
+| Kubernetes配置  | 16 vCPUs(total),24 GB of RAM(total),100 GB(pernode) |  
+| 確認EULA  | 總共有三個網頁需要確認授權 |  
+
+
 ## Linux Client 準備  
 
 環境更新及安裝基本套件  
@@ -32,7 +41,7 @@ sudo apt-get -y install vim build-essential curl ssh
 sudo apt-get install net-tools
 ```
 
-安裝Docker engine    
+安裝Docker engine(會由此台VM將Images推送至docker hub)    
 ```
 curl -fsSL https://get.docker.com -o get-docker.sh
 sh get-docker.sh
@@ -52,40 +61,10 @@ chmod 700 get_helm.sh
 ./get_helm.sh
 ``` 
 
-安裝MINIO  
-```
-sudo docker run -d -p 9000:9000 -p 9090:9090 --name minio1   -e "MINIO_ROOT_USER=kasten"   -e "MINIO_ROOT_PASSWORD=P@ssw0rd"   -v /mnt/data:/data   --restart=always  minio/minio server /data --console-address ':9090'
-```
+安裝Kubectl工具(本篇文章透過原生Kubectl的安裝方式)  
+[VMWare提供之安裝方式]([https://www.ithome.com.tw/news/148845](https://kubernetes.io/docs/tasks/tools/install-kubectl-linux/) "link")  
 
-之後透過網頁來進行產生s3 bucket
 
-![img](https://github.com/ReSin-Yan/Veeam-Kasten-WorkGuide/blob/main/img/minio01.png "img")  
-![img](https://github.com/ReSin-Yan/Veeam-Kasten-WorkGuide/blob/main/img/minio02.png "img")  
-![img](https://github.com/ReSin-Yan/Veeam-Kasten-WorkGuide/blob/main/img/minio03.png "img")  
-
-安裝NFS  
-```
-sudo apt-get install nfs-kernel-server nfs-common
-mkdir nfsshare
-sudo chmod -R 777 /home/ubuntu/nfsshare/
-```
-編輯/etc/exports  
-```
-sudo vim /etc/exports  
-#新增以下
-/home/ubuntu/nfsshare/    *(rw,sync,no_root_squash,no_all_squash)
-```
-
-重啟服務  
-```
-/etc/init.d/nfs-kernel-server restart
-``` 
-
-安裝kubectl vsphere plugin    
-```
-unzip vsphereplugin.zip
-sudo cp bin/* /usr/local/bin
-```
 
 ## Kubernetes 操作及環境準備    
 
@@ -94,12 +73,11 @@ sudo cp bin/* /usr/local/bin
 如果是其它Kubernetes的平台，需要確認能夠正常的執行Kubernetes的相關操作  
 可以跳轉到下一章節  
 
-登入到Taznu環境  
+登入到Taznu環境(IP,路徑)  
 ```
 export KUBECTL_VSPHERE_PASSWORD=P@ssw0rd
-kubectl vsphere login --server=10.66.99.2 --insecure-skip-tls-verify  --vsphere-username administrator@vsphere.local --tanzu-kubernetes-cluster-name  [輸入姓名]-tkc1
-kubectl vsphere login --server=10.66.99.2 --insecure-skip-tls-verify  --vsphere-username administrator@vsphere.local --tanzu-kubernetes-cluster-name  [輸入姓名]-tkc2
-kubectl config use-context [輸入姓名]-tkc[x]
+kubectl vsphere login --server=192.168.170.73 --insecure-skip-tls-verify  --vsphere-username administrator@vsphere.local --tanzu-kubernetes-cluster-name resin-tap-01  
+kubectl config use-context resin-tap-01
 ```
 
 下載gcallowroot yaml(TKC需要)  
@@ -109,6 +87,7 @@ cd
 git clone https://github.com/ReSin-Yan/NTUSTCourse
 cd NTUSTCourse/Kubernetes
 kubectl apply -f gcallowroot.yaml  
+kubectl create clusterrolebinding default-tkg-admin-privileged-binding --clusterrole=psp:vmware-system-privileged --group=system:authenticated
 ```
 
 安裝NFS sub-dir(如有Kubernetes本身已有StorageClass也建議設定)  
@@ -119,250 +98,174 @@ helm repo add nfs-subdir-external-provisioner https://kubernetes-sigs.github.io/
 helm install nfs-subdir-external-provisioner nfs-subdir-external-provisioner/nfs-subdir-external-provisioner \
     --set nfs.server=[ip] \
     --set nfs.path=/home/ubuntu/nfsshare
+kubectl patch storageclass wcppolicy -p '{"metadata": {"annotations":{"storageclass.kubernetes.io/is-default-class":"true"}}}'    
 ```
 
 
-## 安裝說明  
-請參考以下安裝參數設定 
-會標明必須或是需要討論  
-版本為5.x.x  
-安裝方式為對外(可以改成air-gapped)  
-其餘參數會主要針對雲端環境(Azure,vsphere,aws)，或是Kasten的其餘服務(Promethues,Grafana,Kanister)  
-這邊只擷取可能會用到的部分  
+## 安裝TAP  
 
-設定namespace的scc(OCP需要)  
+install the Tanzu CLI 以及其插件(Tanzu指令的擴充包，可以輸入更多指令參數),從vmware network下載  
+圖片待補  
 ```
---set scc.create=true
-```
-
-### 可以討論的參數  
-
-如果可以配合建立命名空間 kasten-io就輸入以下，不行則填入客戶提供的namespace  
-```
---namespace=kasten-io
+tar -xvf tanzu-framework-linux-amd64.tar -C $HOME/tanzu
+export TANZU_CLI_NO_INIT=true
+cd $HOME/tanzu
+export VERSION=v0.25.0
+sudo install cli/core/$VERSION/tanzu-core-linux_amd64 /usr/local/bin/tanzu
+tanzu version
+tanzu plugin install --local cli all
+tanzu plugin list 
 ```
 
-以下兩個參數為volumesnapshot不支援的情形下的替代方案  
-第二行為根據namespace來進行設定，POC可以不用更改，但是實務上建議改成第三行by Object啟用  
-
+Deploying Cluster Essentials v1.3,從vmware network下載  
+圖片待補  
 ```
---set injectKanisterSidecar.enabled=true 
---set-string injectKanisterSidecar.namespaceSelector.matchLabels.k10/injectKanisterSidecar=true
---set-string injectKanisterSidecar.objectSelector.matchLabels=true
-```
-
-ingress網路 or LoadBalance  
-網路服務此段會根據使用者有沒有L4 or L7的服務來進行設定  
-考量到的點是，POC情境下，使用者不接受tunnel的方式or服務正式上線  
-
-L4 LoadBalance  
-```
---set externalGateway.create=true  
+tar -xvf tanzu-cluster-essentials-linux-amd64-1.3.0.tgz
+export INSTALL_BUNDLE=registry.tanzu.vmware.com/tanzu-cluster-essentials/cluster-essentials-bundle@sha256:54bf611711923dccd7c7f10603c846782b90644d48f1cb570b43a082d18e23b9
+export INSTALL_REGISTRY_HOSTNAME=registry.tanzu.vmware.com
+export INSTALL_REGISTRY_USERNAME=[VMWare Network Account]
+export INSTALL_REGISTRY_PASSWORD=[VMWare Network Password]
+./install.sh --yes
+sudo cp $HOME/tanzu-cluster-essentials/kapp /usr/local/bin/kapp
+sudo cp $HOME/tanzu-cluster-essentials/imgpkg /usr/local/bin/imgpkg
+#install TAP(download from vmware registry)
+export TAP_VERSION=1.3.3
+kubectl create ns tap-install
 ```
 
-L7 ingress  
+添加secret  
 ```
---set ingress.create=true
---set ingress.class=contour
---set ingress.host=kastendemo.com
-```
-
-驗證服務相關  
-大致上可以分為  
-basicAuth  
-Open ID  
-openshift  
-ldap  
-
-POC階段建議使用basicAuth，可以自行創建帳號密碼(需要使用htpasswd創建)進行登入    
-產生htpasswd(需要預先安裝)  
-```
-sudo apt install -y apache2-utils
-cd 
-mkdir htpasswd 
-cd htpasswd/
-htpasswd -c $PWD/.htpasswd kasten  
-#輸入密碼之後
-cat .htpasswd  
+tanzu secret registry add tap-registry \
+--server registry.tanzu.vmware.com \
+--username [VMWare Network Account] \
+--password [VMWare Network Password]  \
+--namespace tap-install \
+--export-to-all-namespaces   \
+--yes
 ```
 
-
+從vmware官網將檔案list拉到本地端  
 ```
---set auth.basicAuth.enabled=true 
---set auth.basicAuth.htpasswd='example:$apr1$qrAVXu.v$Q8YVc50vtiS8KPmiyrkld0'
-```
-
-
-```
---set auth.basicAuth.enabled=true 
---set auth.basicAuth.htpasswd='example:$apr1$qrAVXu.v$Q8YVc50vtiS8KPmiyrkld0'
+tanzu package repository add tanzu-tap-repository   \
+--url $INSTALL_REGISTRY_HOSTNAME/tanzu-application-platform/tap-packages:$TAP_VERSION   \
+--namespace tap-install
 ```
 
-以下參數主要為設定AirGapped的情境下，repo的位置，如果非安裝包的路徑，只需要修改[kastenrepo.veeam.com/kasten]，其他都是必須  
+確認是否可以看到可安裝內容列表  
 ```
---set global.airgapped.repository=kastenrepo.veeam.com/kasten 
---set global.upstreamCertifiedImages=true 
-```
-
-### 非必要但是建議放入的參數  
-Kasten備份出來的Config會放到由CSI產生的volume內(預設是20GB)，POC應該不影響，但是實務上要調整成大一點的空間  
-如果CSI本身有支援extend，那就可以在之後更改，如果沒有，就必須要在一開始就設定好大小  
-```
---set global.persistence.catalog.size=200Gi 
---set global.persistence.jobs.size=200Gi
---set global.persistence.logging.size=200Gi
-```  
-
-
-### 參考安裝指令參考  
-環境有L4且對外  
-
-```
-helm repo add kasten https://charts.kasten.io/
-helm repo update
-kubectl create namespace kasten-io
+tanzu package available list --namespace tap-install
 ```
 
+準備config(可以參考LINK檔案建立，根據環境設定配置檔案)  
 ```
-helm install k10 kasten/k10 \
---namespace=kasten-io \
---set injectKanisterSidecar.enabled=true \
---set-string injectKanisterSidecar.namespaceSelector.matchLabels.k10/injectKanisterSidecar=true \
---set global.persistence.catalog.size=200Gi \
---set global.persistence.jobs.size=200Gi \
---set global.persistence.logging.size=200Gi \
---set externalGateway.create=true  \
---set global.persistence.storageClass=wcppolicy \
---set auth.basicAuth.enabled=true \
---set auth.basicAuth.htpasswd='kasten:$apr1$UtUFc7QC$15rWGptryX75BCJ32X8Hv0' \
---set features.vbrTkgsEnabled=true
+tanzu package install tap -p tap.tanzu.vmware.com -v 1.3.3 --values-file  tap-values.yaml -n tap-install 
 ```
+通常第一次安裝都會failed  
+但是實際上並不是安裝失敗，而是images在下載，過了檢查時間  
+可以過一小段時間再回頭檢查  
 
-刪除指令參考以下  
+
+###   
+確認安裝狀態  
 ```
-helm uninstall k10 -n kasten-io
+tanzu package installed list -A
+```
+確認特定package status  
+```
+tanzu package installed  get tap-gui -n tap-install
+```
+刪除服務  
+```
+tanzu package installed delete tap -n tap-install
+```
+更新服務  
+```
+tanzu package installed update tap --values-file  tap-values.yaml -n tap-install
 ```
 
 
+## 功能測試以及環境設定    
 
-## 環境設定    
-
-### Location Profile  
-
-Location Profile目前總共支援6種模式  
-其中分為三大公有雲空間  
-以及地端三種空間NFS、S3、VBR  
-其中VBR只有支援Tanzu  
-
-新增Profile  
-![img](https://github.com/ReSin-Yan/Veeam-Kasten-WorkGuide/blob/main/img/01location.png "img")  
-![img](https://github.com/ReSin-Yan/Veeam-Kasten-WorkGuide/blob/main/img/02profile.png "img")  
-
-
-新增S3空間  
-使用預先準備的minio空間([MINIO](https://github.com/ReSin-Yan/Veeam-Kasten-WorkGuide#linux-client-%E6%BA%96%E5%82%99   "link") )   
-![img](https://github.com/ReSin-Yan/Veeam-Kasten-WorkGuide/blob/main/img/03s3.png "img")  
-
-設定完成可以再minio空間看到資料夾建立  
-![img](https://github.com/ReSin-Yan/Veeam-Kasten-WorkGuide/blob/main/img/04s3.png "img")  
-
-設定VBR前需要先設置vsphere Infrastructure Profiles([Infrastructure](https://github.com/ReSin-Yan/Veeam-Kasten-WorkGuide#infrastructure-profiles   "link") )   
-之後依序輸入資訊  
-![img](https://github.com/ReSin-Yan/Veeam-Kasten-WorkGuide/blob/main/img/05vbr.png "img")  
-
-
-
-NFS為新版本加入的功能(原先沒有VBR跟NFS Path)  
-使用NFS當作儲存空間  
-需要將使用NFS的PVC建立在安裝Kasten的Namespace  
-EX:我的安裝指令使用helm install k10 kasten/k10 --namespace=kasten-io   
-代表我安裝在Kasten-io
-所以需要將PVC建立在kasten-io上  
-
-使用以下的方式分別產生PV.yaml以及PVC.yaml  
-其中在server的IP使用前面所產生的NFS路徑及IP  
-
-建立PV  
+添加Images repo設定(需要跟tap-vauels設定相同，以下以docker為例)  
+並且本設定會以demo的namespace當作工作環境  
 ```
-tee pv.yaml <<EOF
+kubectl create ns demo  
+tanzu secret registry add registry-credentials \
+  --server https://index.docker.io/v1/ \
+  --username [Docker username] \
+  --password [Docker password] \
+  --namespace demo 
+```
+
+設定namespace的權限  
+```
+export TAP_DEV_NAMESPACE="demo"
+curl -o serviceaccounts.yml https://raw.githubusercontent.com/benwilcock/TAPonLAP/main/TAPonLAPv1.1/serviceaccounts.yml
+kubectl -n $TAP_DEV_NAMESPACE apply -f "serviceaccounts.yml"
+
+cat <<EOF > rbac.yaml
 apiVersion: v1
-kind: PersistentVolume
+kind: Secret
 metadata:
-  name: nfs
-spec:
-  capacity:
-    storage: 10Gi
-  accessModes:
-    - ReadWriteMany
-  nfs:
-    server: 172.18.19.238
-    path: "/home/ubuntu/nfsshare"
-  mountOptions:
-    - nfsvers=4.2
-EOF
-```
-
-
-建立PVC  
-```
-tee pvc.yaml <<EOF
+  name: tap-registry
+  annotations:
+    secretgen.carvel.dev/image-pull-secret: ""
+type: kubernetes.io/dockerconfigjson
+data:
+  .dockerconfigjson: e30K
+---
 apiVersion: v1
-kind: PersistentVolumeClaim
+kind: Secret
 metadata:
-  name: nfs
-spec:
-  accessModes:
-    - ReadWriteMany
-  storageClassName: ""
-  resources:
-    requests:
-      storage: 10Gi
-  volumeName: nfs
+  name: git-ssh
+  annotations:
+    tekton.dev/git-0: github.com
+type: kubernetes.io/ssh-auth
+data:
+  ssh-privatekey: 8J+UkQ==
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: default
+secrets:
+- name: registry-credentials
+- name: git-ssh
+imagePullSecrets:
+- name: registry-credentials
+- name: tap-registry
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: default-permit-deliverable
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: deliverable
+subjects:
+  - kind: ServiceAccount
+    name: default
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: default-permit-workload
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: workload
+subjects:
+- kind: ServiceAccount
+  name: default
 EOF
+
+kubectl -n demo apply -f rbac.yaml
 ```
 
-分別執行  
+測試部屬服務  
 ```
-kubectl apply -f pv.yaml
-kubectl apply -f pvc.yaml -n kasten-io
-```
-
-
-之後再Kasten介面輸入  
-![img](https://github.com/ReSin-Yan/Veeam-Kasten-WorkGuide/blob/main/img/06nfs.png "img")  
-
-### Infrastructure Profiles  
-
-
-![img](https://github.com/ReSin-Yan/Veeam-Kasten-WorkGuide/blob/main/img/infra-vc.png "img")  
-
-
-## 測試環境建立    
-
-建立兩個命名空間  
-此兩個命名空間將會作來對比於是否具備Kanister的方式
-```
-kubectl create ns nfs-csi
-kubectl create ns vsan-csi
-kubectl label namespace nfs-csi k10/injectKanisterSidecar=true
+tanzu apps workload apply py-demo   --app py-demo   --git-repo https://github.com/jasonchiu17/tap-py-demo   --git-branch master   --type web   --annotation autoscaling.knative.dev/minScale=1   -n demo   -y
 ```
 
-根據兩個volume建立不同的部屬環境  
-
-```
-cd
-git clone https://github.com/ReSin-Yan/Veeam-Kasten-WorkGuide.git
-cd Veeam-Kasten-WorkGuide/nfscsi/
-kubectl apply -f pre.yaml  -n nfs-csi
-kubectl apply -f post.yaml  -n nfs-csi
-kubectl get svc -n nfs-csi
-```
-
-```
-cd 
-cd Veeam-Kasten-WorkGuide/vsancsi/
-kubectl apply -f pre.yaml  -n vsan-csi
-kubectl apply -f post.yaml  -n vsan-csi
-kubectl get svc -n vsan-csi
-```
 
