@@ -1,0 +1,65 @@
+profile: full # Can take iterate, build, run, view.
+
+shared:
+  ingress_domain: "zeronetap.lab"
+
+contour:
+  envoy:
+    service:
+      type: LoadBalancer # This is set by default, but can be overridden by setting a different value.
+
+tap_gui:
+  ingressEnabled: true
+  service_type: ClusterIP
+
+ceip_policy_disclosed: true
+
+
+
+supply_chain: basic
+ootb_supply_chain_basic:
+  registry:
+    server: index.docker.io
+    repository: aa210682
+  gitops:
+    ssh_secret: ""
+
+
+
+buildservice:
+  kp_default_repository: "index.docker.io/aa210682/build-service"
+  kp_default_repository_username: "aa210682"
+  kp_default_repository_password: "beggin123"
+  exclude_dependencies: true
+  tanzunet_username: resin.yan@zerone.com.tw
+  tanzunet_password: Beggin@123
+
+
+accelerator:
+  domain: accelerator.zeronetap.lab
+  ingress:
+    include: true
+  server:
+    service_type: ClusterIP
+
+metadata_store:
+  ns_for_export_app_cert: "default"
+  app_service_type: ClusterIP #to LoadBalancer. If shared.ingress_domain is set earlier, this must be set to ClusterIP.
+
+scanning:
+  metadataStore:
+    url: "" # Configuration is moved, so set this string to empty.
+
+grype:
+  namespace: "default"
+  targetImagePullSecret: "registry-credentials"
+
+cnrs:
+  domain_name: cnr.zeronetap.lab
+  domain_template: '{{.Name}}-{{.Namespace}}.{{.Domain}}'
+
+learningcenter:
+  ingressDomain: learning-center.zeronetap.lab
+
+excluded_packages:
+- image-policy-webhook.signing.apps.tanzu.vmware.com
