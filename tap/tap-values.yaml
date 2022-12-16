@@ -28,11 +28,11 @@ ootb_supply_chain_basic:
 
 buildservice:
   kp_default_repository: "index.docker.io/aa210682/build-service"
-  kp_default_repository_username: "aa210682"
-  kp_default_repository_password: "beggin123"
+  kp_default_repository_username: "xxxxx"
+  kp_default_repository_password: "xxxx"
   exclude_dependencies: true
-  tanzunet_username: resin.yan@zerone.com.tw
-  tanzunet_password: Beggin@123
+  tanzunet_username: xxx@xxx
+  tanzunet_password: xxxxx
 
 
 accelerator:
