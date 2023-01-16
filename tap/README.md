@@ -23,7 +23,7 @@ VMware表示，Tanzu Application Service和最新的TAP差異在，TAP使用Tanz
 | 基本需求 | 用途or說明 | 
 |-------|-------|
 | VMWare Tanzu Network | 用來下載安裝需要之檔案，安裝必要之images(可以推送到私有倉庫) |
-| container image registry |  Docker Hun or Harbor(本文使用Docker hun對外安裝的方式) |
+| container image registry |  Docker Hub or Harbor(本文使用Docker hun對外安裝的方式) |
 | Gitlab or Github  | 以Repo為單位，進行配置workload |  
 | 包含StorageClass的kubernetes  | 完整安裝需要10GB以上的可使用空間,以及設定成default |  
 | DNS Record  | 服務使用Contour及enovy，可以等TAP建立完成後設定 |  
