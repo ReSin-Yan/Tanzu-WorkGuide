@@ -98,7 +98,7 @@ helm repo add nfs-subdir-external-provisioner https://kubernetes-sigs.github.io/
 helm install nfs-subdir-external-provisioner nfs-subdir-external-provisioner/nfs-subdir-external-provisioner \
     --set nfs.server=[ip] \
     --set nfs.path=/home/ubuntu/nfsshare
-kubectl patch storageclass wcppolicy -p '{"metadata": {"annotations":{"storageclass.kubernetes.io/is-default-class":"true"}}}'    
+kubectl patch storageclass nfs-client -p '{"metadata": {"annotations":{"storageclass.kubernetes.io/is-default-class":"true"}}}'    
 ```
 
 
