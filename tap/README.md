@@ -296,7 +296,7 @@ kubectl -n demo apply -f rbac.yaml
 
 測試部屬服務  
 ```
-tanzu apps workload apply py-demo   --app py-demo   --git-repo https://github.com/jasonchiu17/tap-py-demo   --git-branch master   --type web   --annotation autoscaling.knative.dev/minScale=1   -n demo   -y
+tanzu apps workload apply spring-demo   --app spring-demo   --git-repo https://github.com/jasonchiu17/tap-spring-demo   --git-branch master   --type web   --annotation autoscaling.knative.dev/minScale=1  --label apps.tanzu.vmware.com/has-tests=true   -y
 ```
 
 
