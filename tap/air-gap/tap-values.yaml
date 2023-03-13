@@ -1,0 +1,66 @@
+profile: full
+
+shared:
+  ca_cert_data: "-----BEGIN CERTIFICATE-----\xxxxxxxxxxxxxxxx\n-----END CERTIFICATE-----\n"
+  ingress_domain: "zeronetap.airgaplab"
+  image_registry:
+    project_path: "nvharbor.zeronetap.lab/tap-packages/tap"
+    username: "admin"
+    password: "Harbor12345"
+
+ceip_policy_disclosed: true
+
+# The lab environment does not have a load balancer capability
+# so you must configure Contour to use a NodePort
+contour:
+  envoy:
+    service:
+      type: LoadBalancer
+cnrs:
+  domain_name: cnr.zeronetap.airgaplab
+  domain_template: '{{.Name}}-{{.Namespace}}.{{.Domain}}'
+
+tap_gui:
+  #ingressEnabled: true
+  service_type: ClusterIP
+grype:
+  namespace: "default"
+  targetImagePullSecret: "registry-credentials"
+  db:
+    dbUpdateUrl: http://10.1.65.102:8080/listing.json
+
+metadata_store:
+  ns_for_export_app_cert: "*"
+  app_service_type: LoadBalancer #to LoadBalancer. If shared.ingress_domain is set earlier, this must be set to ClusterIP.
+
+scanning:
+  metadataStore:
+    url: "" # Configuration is moved, so set this string to empty.
+
+buildservice:
+  kp_default_repository: "nvharbor.zeronetap.lab/tap-packages/tap/buildservice"
+  kp_default_repository_username: "admin"
+  kp_default_repository_password: "Harbor12345"
+  exclude_dependencies: true
+
+#supply_chain: basic
+supply_chain: testing_scanning
+
+ootb_supply_chain_testing_scanning:
+  #ootb_supply_chain_basic:
+  registry:
+    server: nvharbor.zeronetap.lab
+    repository: workload
+  gitops:
+    ssh_secret: ""
+
+      #package_overlays:
+      #- name: "grype"
+      #secrets:
+      #- name: "grype-airgap-overlay"
+
+excluded_packages:
+  - policy.apps.tanzu.vmware.com
+  - image-policy-webhook.signing.apps.tanzu.vmware.com
+  - learningcenter.tanzu.vmware.com
+  - workshops.learningcenter.tanzu.vmware.com
