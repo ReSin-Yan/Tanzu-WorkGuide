@@ -24,8 +24,6 @@ VMware表示，Tanzu Application Service和最新的TAP差異在，TAP使用Tanz
 | 基本需求 | 用途or說明 | 
 |-------|-------|
 | VMWare Tanzu Network | 用來下載安裝需要之檔案，安裝必要之images(推送到私有倉庫) |
-| Harbor |  用來存放images，其中包含了TAP安裝所需要的images，以及在suppluchain中產生的images |
-| Gitlab or Github  | 以Repo為單位，進行配置workload |  
 | 包含StorageClass的kubernetes  | 完整安裝需要10GB以上的可使用空間,以及設定成default |  
 | DNS Record  | 服務使用Contour及enovy，可以等TAP建立完成後設定 |  
 | Kubernetes需求  | v1.23,v1.24, 本篇文章使用Tanzu(7.0 U3e or later) |  
@@ -34,4 +32,13 @@ VMware表示，Tanzu Application Service和最新的TAP差異在，TAP使用Tanz
 
 ### 離線環境需要額外準備的內容  
 
+| 基本需求 | 用途or說明 | 安裝連結 |
+|-------|-------|-------|
+| Harbor |  用來存放images，其中包含了TAP安裝所需要的images，以及在suppluchain中產生的images |
+| Gitlab or Github  | 以Repo為單位，進行配置workload |  
+| nexus server  | supply chain當中的Test code的步驟中，會需要用到的maven package |  
+| nginx server  | supply chain當中的Scan code/images 的步驟中，會需要用到的grype db |  
 
+Tips: 其中的nexus server以及nginx server，都是採用 opensource 的安裝方式，如果有習慣的可以使用其他安裝方式  
+Tips2: Harbor需要先放置nginx1.16,maven,nfs-subdir-external-provisioner 這三個images  
+Tips3: 由於測試內容使用NFS當作儲存空間(storageclass)，所以額外準備nfs-subdir-external-provisioner的images，沒有則不必  
