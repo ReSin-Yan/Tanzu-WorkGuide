@@ -213,4 +213,46 @@ tanzu package repository add tbs-full-deps-repository   --url $IMGPKG_REGISTRY_H
 tanzu package install full-tbs-deps -p full-tbs-deps.tanzu.vmware.com -v 1.9.4 -n tap-install
 ```
 
+## 確認安裝狀態已及部屬相關設定檔案  
+
+確認安裝狀態  
+```
+tanzu package installed list -A
+```
+確認特定package status  
+```
+tanzu package installed  get tap-gui -n tap-install
+```
+確認profile可以輸入的參數  
+```
+tanzu package available get tap-gui.tanzu.vmware.com/1.3.2 -n tap-install --values-schema -o yaml
+```
+刪除服務  
+```
+tanzu package installed delete tap -n tap-install
+```
+更新服務  
+```
+tanzu package installed update tap --values-file  tap-values.yaml -n tap-install
+```
+
+## 執行測試  
+
+token相關都會綁定ns，這邊以default這一個ns為例  
+```
+tanzu secret registry add registry-credentials --server nvharbor.zeronetap.lab --username admin --password Harbor12345
+export TAP_DEV_NAMESPACE="default"
+curl -o serviceaccounts.yml https://raw.githubusercontent.com/benwilcock/TAPonLAP/main/TAPonLAPv1.1/serviceaccounts.yml
+kubectl -n $TAP_DEV_NAMESPACE apply -f "serviceaccounts.yml"
+```
+
+新增git x509 權限給supply chain  
+先下載檔案gitlab.crt  
+```
+Create a workload from Git
+先下載檔案gitlab.crt
+openssl s_client -connect 172.18.20.240:9443 < /dev/null 2> /dev/null |   openssl x509 |   sed -ne '/BEGIN CERT/,/END CERT/p' > gitlab2.crt
+kubectl create secret generic gitlab-secret --from-literal=username=jason --from-literal=password=Call0960 --from-file=caFile=gitlab2.crt -o yaml --dry-run=client > git-credentials.yaml
+kubectl apply -f git-credentials.yaml 
+```
 
