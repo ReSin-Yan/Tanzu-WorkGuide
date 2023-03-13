@@ -1,0 +1,19 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: tap-gui-ingress
+  namespace: tap-gui
+  annotations:
+    kubernetes.io/ingress.class: contour
+spec:
+  rules:
+  - host: tap-gui.zeronetap.airgaplab
+    http:
+      paths:
+      - backend:
+          service:
+            name: server
+            port:
+              number: 7000
+        path: /
+        pathType: Prefix
