@@ -28,7 +28,16 @@ vSphere Container Storage Plug-in也稱為上層 vSphere CSI 驅動是一個磁�
 ## 安裝步驟  
 
 ```
-sudo apt-get update  
+sudo apt-get update
+sudo apt update
+sudo apt install -y ca-certificates curl gpg
+sudo mkdir -p /etc/apt/keyrings
+curl -fsSL https://packages.vmware.com/tools/keys/VMWARE-PACKAGING-GPG-RSA-KEY.pub | sudo gpg --dearmor -o /etc/apt/keyrings/tanzu-archive-keyring.gpg
+echo "deb [signed-by=/etc/apt/keyrings/tanzu-archive-keyring.gpg] https://storage.googleapis.com/tanzu-cli-os-packages/apt tanzu-cli-jessie main" | sudo tee /etc/apt/sources.list.d/tanzu.list
+sudo apt update
+sudo apt install -y tanzu-cli
+
+
 ```
 
 下載檔案(版本1.27.5 做為控制及群)  
