@@ -27,6 +27,10 @@ vSphere Container Storage Plug-in也稱為上層 vSphere CSI 驅動是一個磁�
 
 ## 安裝步驟  
 
+```
+sudo apt-get update  
+```
+
 下載檔案(版本1.27.5 做為控制及群)  
 https://customerconnect.vmware.com/en/downloads/details?downloadGroup=TKG-240&productId=1400&rPId=110858&download=true&fileId=b4c3d322aff95bf615c4bf17688cfdad&uuId=92a45000-bbd2-40ec-bf37-e64a7e9ab9de
 
