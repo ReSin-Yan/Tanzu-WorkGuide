@@ -11,6 +11,8 @@ curl -fsSL https://packages.vmware.com/tools/keys/VMWARE-PACKAGING-GPG-RSA-KEY.p
 echo "deb [signed-by=/etc/apt/keyrings/tanzu-archive-keyring.gpg] https://storage.googleapis.com/tanzu-cli-os-packages/apt tanzu-cli-jessie main" | sudo tee /etc/apt/sources.list.d/tanzu.list
 sudo apt update
 sudo apt install -y tanzu-cli
+tanzu plugin group get vmware-tkg/default:v2.4.0
+tanzu plugin install --group vmware-tkg/default:v2.4.0
 
 
 ```
